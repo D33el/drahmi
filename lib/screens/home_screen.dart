@@ -1,3 +1,4 @@
+import 'package:drahmi/widgets/operation_dialog.dart';
 import 'package:flutter/material.dart';
 import '../models/operation.dart';
 import '../services/storage_service.dart';
@@ -30,65 +31,36 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _addOperation(String type) async {
-    final amountController = TextEditingController();
-    final reasonController = TextEditingController();
+  Future<void> _openOperationDialog({
+    String? type,
+    Operation? operation,
+  }) async {
+    final isEdit = operation != null;
+    final opType = type ?? operation!.type;
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(
-          type == 'in' ? 'Ajouter de l’argent' : 'Retirer de l’argent',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Montant',
-                prefixIcon: Icon(Icons.attach_money),
-              ),
-            ),
-            TextField(
-              controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Raison',
-                prefixIcon: Icon(Icons.note_alt_outlined),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final amount = double.tryParse(amountController.text);
-              final reason = reasonController.text.trim();
-              if (amount != null && amount > 0) {
-                final op = Operation(
-                  id: "0",
-                  amount: amount,
-                  type: type,
-                  reason: reason,
-                  date: DateTime.now(),
-                );
-                setState(() {
-                  operations.insert(0, op);
-                  balance += type == 'in' ? amount : -amount;
-                });
-                await StorageService.saveData(balance, operations);
-                Navigator.pop(context);
+      builder: (_) => OperationDialog(
+        type: opType,
+        operation: operation,
+        onConfirm: (op) async {
+          setState(() {
+            if (isEdit) {
+              final index = operations.indexWhere((o) => o.id == op.id);
+              if (index != -1) {
+                final currentOp = operations[index];
+                operations[index] = op;
+                balance += op.type == 'in'
+                    ? op.amount - currentOp.amount
+                    : currentOp.amount - op.amount;
               }
-            },
-            child: const Text('Confirmer'),
-          ),
-        ],
+            } else {
+              operations.insert(0, op);
+              balance += op.type == 'in' ? op.amount : -op.amount;
+            }
+          });
+          await StorageService.saveData(balance, operations);
+        },
       ),
     );
   }
@@ -130,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         ElevatedButton.icon(
-                          onPressed: () => _addOperation('in'),
+                          onPressed: () => _openOperationDialog(type: 'in'),
                           icon: const Icon(
                             Icons.add_circle_outline,
                             color: Colors.white,
@@ -145,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton.icon(
-                          onPressed: () => _addOperation('out'),
+                          onPressed: () => _openOperationDialog(type: 'out'),
                           icon: const Icon(
                             Icons.remove_circle_outline,
                             color: Colors.white,
@@ -172,7 +144,40 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(color: Colors.black54),
                 ),
               ),
-            for (final op in operations) OperationTile(operation: op),
+            for (final op in operations)
+              OperationTile(
+                operation: op,
+                onEdit: () => _openOperationDialog(operation: op),
+                onDelete: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Confirmer la suppression'),
+                      content: const Text(
+                        'Voulez-vous vraiment supprimer cette opération ?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Annuler'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Supprimer'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true) {
+                    setState(() {
+                      operations.removeWhere((o) => o.id == op.id);
+                      balance += op.type == 'in' ? -op.amount : op.amount;
+                    });
+                    await StorageService.saveData(balance, operations);
+                  }
+                },
+              ),
           ],
         ),
       ),

@@ -3,8 +3,15 @@ import '../models/operation.dart';
 
 class OperationTile extends StatelessWidget {
   final Operation operation;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const OperationTile({super.key, required this.operation});
+  const OperationTile({
+    super.key,
+    required this.operation,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +33,13 @@ class OperationTile extends StatelessWidget {
         ),
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
-
+          onSelected: (value) {
+            if (value == 'edit' && onEdit != null) {
+              onEdit!();
+            } else if (value == 'delete' && onDelete != null) {
+              onDelete!();
+            }
+          },
           itemBuilder: (context) => [
             const PopupMenuItem(
               value: 'edit',
