@@ -65,6 +65,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _formatWithSpaces(double value) {
+    final sign = value < 0 ? '-' : '';
+    final absVal = value.abs();
+    final parts = absVal.toStringAsFixed(2).split('.');
+    final intPart = parts[0];
+    final frac = parts[1];
+    final sb = StringBuffer();
+    int count = 0;
+    for (int i = intPart.length - 1; i >= 0; i--) {
+      sb.write(intPart[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) sb.write(' ');
+    }
+    final spacedInt = sb.toString().split('').reversed.join();
+    return '$sign$spacedInt.$frac';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,13 +106,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '${balance.toStringAsFixed(2)} DZD',
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Builder(
+                      builder: (_) {
+                        return Text(
+                          '${_formatWithSpaces(balance)} DZD',
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
                     Row(

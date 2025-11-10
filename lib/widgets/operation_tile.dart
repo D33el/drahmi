@@ -13,6 +13,23 @@ class OperationTile extends StatelessWidget {
     this.onDelete,
   });
 
+  String formatWithSpaces(double value) {
+    final sign = value < 0 ? '-' : '';
+    final absVal = value.abs();
+    final parts = absVal.toStringAsFixed(2).split('.');
+    final intPart = parts[0];
+    final frac = parts[1];
+    final sb = StringBuffer();
+    int count = 0;
+    for (int i = intPart.length - 1; i >= 0; i--) {
+      sb.write(intPart[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) sb.write(' ');
+    }
+    final spacedInt = sb.toString().split('').reversed.join();
+    return '$sign$spacedInt.$frac';
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = operation.type == 'in' ? Colors.green : Colors.red;
@@ -25,11 +42,19 @@ class OperationTile extends StatelessWidget {
           color: color,
         ),
         title: Text(
-          '${operation.amount.toStringAsFixed(2)} DZD',
+          '${formatWithSpaces(operation.amount)} DZD',
           style: TextStyle(fontWeight: FontWeight.bold, color: color),
         ),
-        subtitle: Text(
-          operation.reason.isEmpty ? 'Aucune raison' : operation.reason,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(operation.reason.isEmpty ? 'Aucune raison' : operation.reason),
+            const SizedBox(height: 4),
+            Text(
+              '${(operation.date).day.toString().padLeft(2, '0')}/${(operation.date).month.toString().padLeft(2, '0')}/${(operation.date).year}',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
         ),
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),

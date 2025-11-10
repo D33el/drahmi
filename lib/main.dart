@@ -1,3 +1,4 @@
+import 'package:drahmi/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/stats_screen.dart';
@@ -12,7 +13,7 @@ class MoneyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Money Calculator',
+      title: 'Drahmi',
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
       home: const RootNavigation(),
     );
@@ -28,7 +29,7 @@ class RootNavigation extends StatefulWidget {
 
 class _RootNavigationState extends State<RootNavigation> {
   int _index = 0;
-  final pages = const [HomeScreen(), StatsScreen()];
+  final pages = const [HomeScreen(), StatsScreen(), SettingsScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +41,10 @@ class _RootNavigationState extends State<RootNavigation> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
           NavigationDestination(icon: Icon(Icons.bar_chart), label: 'Stats'),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'Parametres',
+          ),
         ],
       ),
     );
